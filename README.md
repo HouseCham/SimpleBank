@@ -5,5 +5,6 @@
 ##### This project uses:
 
 * Golang 1.2
-* PostgreSQL as database
-* Sqlc 
+* [PostgreSQL](https://www.postgresql.org/) as database motor
+* [Sqlc](https://github.com/kyleconroy/sqlc/blob/main/docs/index.rst)
+
