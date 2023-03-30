@@ -34,3 +34,44 @@ func (q *Queries) CreateEntry(ctx context.Context, arg CreateEntryParams) (Entry
 	)
 	return i, err
 }
+
+const getEntry = `-- name: GetEntry :one
+SELECT id, account_id, amount, created_at FROM entries
+WHERE id = $1
+`
+
+func (q *Queries) GetEntry(ctx context.Context, id int64) (Entry, error) {
+	row := q.db.QueryRowContext(ctx, getEntry, id)
+	var i Entry
+	err := row.Scan(
+		&i.ID,
+		&i.AccountID,
+		&i.Amount,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const updateEntry = `-- name: UpdateEntry :one
+UPDATE entries 
+SET amount = $1
+WHERE id = $2
+RETURNING id, account_id, amount, created_at
+`
+
+type UpdateEntryParams struct {
+	Amount string `json:"amount"`
+	ID     int64  `json:"id"`
+}
+
+func (q *Queries) UpdateEntry(ctx context.Context, arg UpdateEntryParams) (Entry, error) {
+	row := q.db.QueryRowContext(ctx, updateEntry, arg.Amount, arg.ID)
+	var i Entry
+	err := row.Scan(
+		&i.ID,
+		&i.AccountID,
+		&i.Amount,
+		&i.CreatedAt,
+	)
+	return i, err
+}

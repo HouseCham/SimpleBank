@@ -34,17 +34,21 @@ func NewStore(db *sql.DB) *Store {
 	}
 }
 // execTx executes a function within a database transaction
-func (store *Store) execTx(ctx context.Context, fn func(*Queries) error) error {
+func (store *Store) execTransaction(ctx context.Context, fn func(*Queries) error) error {
 	tx, err := store.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
-	q := New(tx)
-	err = fn(q)
+	queries := New(tx)
+
+	// generic function executed
+	err = fn(queries)
 	if err != nil {
+		// in case rollback fails
 		if rollBckError := tx.Rollback(); rollBckError != nil {
-			return fmt.Errorf("tx err: %v, rb err %v", err, rollBckError)
+			return fmt.Errorf("transaction err: %v, rollback err %v", err, rollBckError)
 		}
+		return err
 	}
 
 	return tx.Commit()
@@ -54,7 +58,7 @@ func (store *Store) execTx(ctx context.Context, fn func(*Queries) error) error {
 func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error) {
 	var result TransferTxResult
 
-	err := store.execTx(ctx, func(q *Queries) error {
+	err := store.execTransaction(ctx, func(q *Queries) error {
 		var err error
 
 		// transfer record
@@ -70,7 +74,7 @@ func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (Trans
 		// adding FROM account entries
 		result.FromEntry, err = q.CreateEntry(ctx, CreateEntryParams{
 			AccountID: arg.FromAccountId,
-			Amount:    "-" + strconv.FormatFloat(arg.Amount, 'f', 2, 64),
+			Amount:    strconv.FormatFloat(-arg.Amount, 'f', 2, 64),
 		})
 		if err != nil {
 			return err
