@@ -2,7 +2,6 @@ package util
 
 import (
 	"math/rand"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -14,19 +13,20 @@ func init() {
 }
 
 func RandomFloat(min, max float64) float64 {
-	return min + rand.Float64() * (max - min)
+	return min + rand.Float64()*(max-min)
 }
 
-func RandomInt(min, max int) int {
-	return rand.Intn(max - min) + min
+func RandomInt(min, max int32) int32 {
+	return min + rand.Int31n(max-min+1)
 }
 
 func RandomString(n int) string {
 	var sb strings.Builder
-	k := len(alphabet)
+	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	k := len(charset)
 
 	for i := 0; i < n; i++ {
-		c := alphabet[rand.Intn(k)]
+		c := charset[rand.Intn(k - 1)]
 		sb.WriteByte(c)
 	}
 
@@ -39,11 +39,11 @@ func RandomOwner() string {
 }
 
 // RandomBalance generates random balance
-func RandomBalance() string {
-	return strconv.FormatFloat(RandomFloat(0, 1000), 'f', 2, 64)
+func RandomBalance() int32 {
+	return RandomInt(0, 10000)
 }
 
 func RandomCurrency() string {
 	currencies := []string{"USD", "EUR", "MXN", "CAD"}
-	return currencies[RandomInt(0, 4)]
+	return currencies[RandomInt(0, 3)]
 }
