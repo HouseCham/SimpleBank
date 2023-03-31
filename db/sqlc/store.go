@@ -90,24 +90,19 @@ func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (Trans
 		if err != nil {
 			return err
 		}
-		//* UPDATE FromAccount
-		result.FromAccount, err = q.AddAccountBalance(ctx, AddAccountBalanceParams{
-			ID:     arg.FromAccountId,
-			Amount: -arg.Amount,
-		})
+
+		//? ==========> this if statement is implemented in order to avoid deadlocks
+		//? Udemy course, chapter 8 min 6:30 to see explanation
+		//? order matters
+		if arg.FromAccountId < arg.ToAccountId {
+			result.FromAccount, result.ToAccount, err = addMoney(ctx, q, arg.FromAccountId, -arg.Amount, arg.ToAccountId, arg.Amount)
+		} else {
+			result.ToAccount, result.FromAccount, err = addMoney(ctx, q, arg.ToAccountId, arg.Amount, arg.FromAccountId, -arg.Amount)
+		}
 		if err != nil {
 			return err
 		}
-
-		//* UPDATE ToAccount
-		result.ToAccount, err = q.AddAccountBalance(ctx, AddAccountBalanceParams{
-			ID:     arg.ToAccountId,
-			Amount: arg.Amount,
-		})
-		if err != nil {
-			return err
-		}
-
+		
 		return nil
 	})
 
@@ -115,4 +110,20 @@ func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (Trans
 		return result, err
 	}
 	return result, nil
+}
+
+func addMoney(ctx context.Context, q *Queries, accountID1 int64, amount1 int32, accountID2 int64, amount2 int32) (
+	account1 Account, account2 Account, err error) {
+	account1, err = q.AddAccountBalance(ctx, AddAccountBalanceParams{
+		ID:     accountID1,
+		Amount: amount1,
+	})
+	if err != nil {
+		return
+	}
+	account2, err = q.AddAccountBalance(ctx, AddAccountBalanceParams{
+		ID:     accountID1,
+		Amount: amount1,
+	})
+	return
 }
