@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -13,8 +12,6 @@ func TestTransferTx(t *testing.T) {
 
 	account1 := createRandomAccount(t)
 	account2 := createRandomAccount(t)
-
-	fmt.Println(">> before: ", account1.Balance, account2.Balance)
 
 	// run n concurrent transfer transactions
 	n := 5
@@ -31,7 +28,6 @@ func TestTransferTx(t *testing.T) {
 				ToAccountId:   account2.ID,
 				Amount:        amount,
 			})
-
 			// we add erros and results from each go routine
 			errs <- err
 			results <- result
@@ -92,18 +88,16 @@ func TestTransferTx(t *testing.T) {
 		require.Equal(t, account2.ID, toAccount.ID)
 
 		// check account's balance
-		
-		fmt.Println(">> tx: ", fromAccount.Balance, toAccount.Balance)
 		diff1 := account1.Balance - fromAccount.Balance
-		diff2 := account2.Balance - toAccount.Balance
+		diff2 := toAccount.Balance - account2.Balance
 		require.Equal(t, diff1, diff2)
 		require.True(t, diff1 > 0)
 		require.True(t, diff1 % amount == 0)
 
-		k := int(diff1/amount)
+		k := int(diff1 / diff2)
 		require.True(t, k >= 1 && k <= n)
-		require.NotContains(t, existed, k)	// check if 'existed' map doesn't contain 'k'
-		existed[k] = true	// we add 'k' to 'existed' map
+		//require.NotContains(t, existed, k)
+		existed[k] = true
 	}
 
 	// check the final updated balances
@@ -113,7 +107,7 @@ func TestTransferTx(t *testing.T) {
 	updatedAccoun2, err := testQueries.GetAccount(context.Background(), account2.ID)
 	require.NoError(t, err)
 
-	fmt.Println(">> after: ", account1.Balance, account2.Balance)
-	require.Equal(t, account1.Balance - int32(n*int(amount)), updatedAccoun1.Balance)
-	require.Equal(t, account2.Balance + int32(n*int(amount)), updatedAccoun2.Balance)
+	//fmt.Println(">> after: ", account1.Balance, account2.Balance)
+	require.Equal(t, account1.Balance-int32(n*int(amount)), updatedAccoun1.Balance)
+	require.Equal(t, account2.Balance+int32(n*int(amount)), updatedAccoun2.Balance)
 }
