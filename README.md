@@ -10,3 +10,5 @@ This is a final project part of the [Golang Backend Master Class](https://www.ud
 
 
 The main porpuse of this project is to learn everything about backend web development: Golang, Postgres, Redis, Gin, gRPC, Docker, Kubernetes, AWS, CI/CD.
+
+* [Viper 1.15](https://github.com/spf13/viper)
