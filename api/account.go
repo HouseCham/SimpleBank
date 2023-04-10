@@ -2,10 +2,12 @@ package api
 
 import (
 	"database/sql"
+	"log"
 	"net/http"
 
 	db "github.com/HouseCham/SimpleBank/db/sqlc"
 	"github.com/gin-gonic/gin"
+	"github.com/lib/pq"
 )
 
 type CreteAccountRequest struct {
@@ -21,21 +23,27 @@ func (server *Server) CreateAccount(ctx *gin.Context) {
 	}
 
 	arg := db.CreateAccountParams{
-		Owner: request.Owner,
+		Owner:    request.Owner,
 		Currency: request.Currency,
-		Balance: 0,
+		Balance:  0,
 	}
 
 	account, err := server.store.CreateAccount(ctx, arg)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-		return
+		if pqErr, ok := err.(*pq.Error); ok {
+			log.Println(pqErr.Code.Name())
+			switch pqErr.Code.Name() {
+			case "foreign_key_violation", "unique_violation":
+				ctx.JSON(http.StatusForbidden, errorResponse(err))
+				return
+			}
+		}
 	}
 	ctx.JSON(http.StatusOK, account)
 }
 
 type getAccountRequest struct {
-	Id int64 `json:"id" uri:"id" binding:"required,min=1"`	//? min simbolizes the smallest possible value
+	Id int64 `json:"id" uri:"id" binding:"required,min=1"` //? min simbolizes the smallest possible value
 
 }
 
@@ -50,8 +58,8 @@ func (server *Server) GetAccount(ctx *gin.Context) {
 	account, err := server.store.GetAccount(ctx, req.Id)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			ctx.JSON(http.StatusNotFound , errorResponse(err))
-			return	
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
 		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
@@ -60,8 +68,8 @@ func (server *Server) GetAccount(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, account)
 }
 
-type listAccountRequest  struct {
-	PageID int32 `json:"page_id" form:"page_id" binding:"required,min=1"`
+type listAccountRequest struct {
+	PageID   int32 `json:"page_id" form:"page_id" binding:"required,min=1"`
 	PageSize int32 `json:"page_size" form:"page_size" binding:"required,min=5,max=10"`
 }
 
@@ -74,8 +82,8 @@ func (server *Server) ListAccount(ctx *gin.Context) {
 	}
 
 	arg := db.ListAccountsParams{
-		Limit: req.PageSize,
-		Offset: (req.PageID - 1)*req.PageSize, //? we divide the accounts in pages of 'Pagesize'
+		Limit:  req.PageSize,
+		Offset: (req.PageID - 1) * req.PageSize, //? we divide the accounts in pages of 'Pagesize'
 	}
 	accounts, err := server.store.ListAccounts(ctx, arg)
 	if err != nil {
