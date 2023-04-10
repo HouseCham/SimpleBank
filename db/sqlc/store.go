@@ -7,7 +7,13 @@ import (
 )
 
 // Store provides all functions to execute db queries and transactions
-type Store struct {
+type Store interface {
+	Querier
+	TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error)
+}
+
+// SQLStore provides all functions to execute SQL db queries and transactions
+type SQLStore struct {
 	*Queries
 	db *sql.DB
 }
@@ -29,15 +35,15 @@ type TransferTxResult struct {
 }
 
 // NewStore creates a new Store
-func NewStore(db *sql.DB) *Store {
-	return &Store{
+func NewStore(db *sql.DB) Store {
+	return &SQLStore{
 		db:      db,
 		Queries: New(db),
 	}
 }
 
 // execTx executes a function within a database transaction
-func (store *Store) execTransaction(ctx context.Context, fn func(*Queries) error) error {
+func (store *SQLStore) execTransaction(ctx context.Context, fn func(*Queries) error) error {
 	tx, err := store.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -59,7 +65,7 @@ func (store *Store) execTransaction(ctx context.Context, fn func(*Queries) error
 
 // TransferTx performs a money transfer from one account to the other.
 // It creates a transfer record, add account entries, and update accounts' balance within a single database transaction
-func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error) {
+func (store *SQLStore) TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error) {
 	var result TransferTxResult
 
 	err := store.execTransaction(ctx, func(q *Queries) error {
@@ -122,8 +128,8 @@ func addMoney(ctx context.Context, q *Queries, accountID1 int64, amount1 int32, 
 		return
 	}
 	account2, err = q.AddAccountBalance(ctx, AddAccountBalanceParams{
-		ID:     accountID1,
-		Amount: amount1,
+		ID:     accountID2,
+		Amount: amount2,
 	})
 	return
 }
