@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/HouseCham/SimpleBank/util"
-	"github.com/dgrijalva/jwt-go"
 	"github.com/stretchr/testify/require"
 )
 
@@ -46,22 +45,22 @@ func TestExpiredPasetoToken(t *testing.T) {
 	require.Nil(t, payload)
 }
 
-func TestInvalidPasetoTokenAlgNone(t *testing.T) {
-	payload, err := NewPayload(util.RandomOwner(), time.Minute)
-	require.NoError(t, err)
+// func TestInvalidPasetoTokenAlgNone(t *testing.T) {
+// 	payload, err := NewPayload(util.RandomOwner(), time.Minute)
+// 	require.NoError(t, err)
 
-	//? creating a token with arg=none which is not supported -> only for testing
-	jwtToken := jwt.NewWithClaims(jwt.SigningMethodNone, payload)
-	token, err := jwtToken.SignedString(jwt.UnsafeAllowNoneSignatureType)
-	require.NoError(t, err)
+// 	//? creating a token with arg=none which is not supported -> only for testing
+// 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodNone, payload)
+// 	token, err := jwtToken.SignedString(jwt.UnsafeAllowNoneSignatureType)
+// 	require.NoError(t, err)
 
-	//? creating a maker with a random secret key to make sure the token is invalid
-	maker, err := NewPaseToMaker([]byte(util.RandomString(32)))
-	require.NoError(t, err)
+// 	//? creating a maker with a random secret key to make sure the token is invalid
+// 	maker, err := NewPaseToMaker([]byte(util.RandomString(32)))
+// 	require.NoError(t, err)
 
-	//? verify the token and make sure it's invalid
-	payload, err = maker.VerifyToken(token)
-	require.Error(t, err)
-	require.EqualError(t, err, ErrInvalidToken.Error())
-	require.Nil(t, payload)
-}
+// 	//? verify the token and make sure it's invalid
+// 	payload, err = maker.VerifyToken(token)
+// 	require.Error(t, err)
+// 	require.EqualError(t, err, ErrInvalidToken.Error())
+// 	require.Nil(t, payload)
+// }

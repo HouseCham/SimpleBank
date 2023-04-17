@@ -13,3 +13,6 @@ The main porpuse of this project is to learn everything about backend web develo
 
 * [Viper 1.15](https://github.com/spf13/viper)
 * [GoMock 1.6.0](https://github.com/golang/mock)
+
+You can see the database documentation if you click this [link](https://dbdocs.io/ramsesramirezvallejo/simple_bank)  
+**Password:** 2!@Rkp32Kdw35^J0Iq7
